@@ -1,13 +1,17 @@
 import streamlit as st
+import os
+openai_key = 'your-secret-key'
+os.environ['OPENAI_API_KEY'] = openai_key
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import HuggingFaceInstructEmbeddings
+from langchain.embeddings import OpenAIEmbeddings,HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
+from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmlTemplates import css, bot_template, user_template
-from langchain.llms import HuggingFaceHub
+# from langchain.llms import HuggingFaceHub
 
 # This method takes a list of PDF files as input, reads them using PdfReader from PyPDF2, 
 # and concatenates the text content from all pages into a single string
@@ -32,13 +36,16 @@ def get_text_chunks(text):
 
 # This method converts text chunks into embeddings and creates a FAISS vector store.
 def get_vectorstore(text_chunks):
-    embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
+    embeddings = OpenAIEmbeddings()
+    # embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
     vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    st.write(vectorstore)
     return vectorstore
 
 # This method initializes a conversational retrieval chain using a language model and a vector store
 def get_conversation_chain(vectorstore):
-    llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512})
+    llm = ChatOpenAI()
+    #llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512})
 
     memory = ConversationBufferMemory(
         memory_key='chat_history', return_messages=True)
